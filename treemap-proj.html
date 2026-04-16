@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026년 기초연구사업 과제 트리맵</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .treemap-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    aspect-ratio: 100 / 70;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .tm-cell {
+    position: absolute;
+    box-sizing: border-box;
+    border: 2px solid #111;
+    overflow: hidden;
+    cursor: default;
+    transition: filter 0.15s;
+  }
+  .tm-cell:hover { filter: brightness(1.12); z-index: 5; }
+  .tm-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: 0;
+  }
+  .tm-box {
+    box-sizing: border-box;
+    border: 0.5px solid rgba(0,0,0,0.15);
+  }
+  .tm-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    padding: 4px;
+    text-align: center;
+  }
+  .tm-label .name {
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.25;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.55);
+  }
+  .tm-label .sub {
+    color: rgba(255,255,255,0.88);
+    font-weight: 700;
+    line-height: 1.3;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.45);
+  }
+  /* Tooltip */
+  .tm-tip {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    background: rgba(20,24,36,0.94);
+    color: #fff;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    pointer-events: none;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    max-width: 360px;
+    backdrop-filter: blur(6px);
+  }
+  .tm-tip .tip-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    padding-bottom: 6px;
+  }
+  .tm-tip .tip-row { display: flex; justify-content: space-between; gap: 18px; }
+  .tm-tip .tip-k { color: rgba(255,255,255,0.6); }
+  .tm-tip .tip-v { font-weight: 600; text-align: right; }
+  .tm-tip .tip-bar {
+    margin-top: 8px;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+  }
+  .tm-tip .tip-bar-exist, .tm-tip .tip-bar-new { height: 100%; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">2026 기초연구사업 인포그래픽</div>
+  <nav>
+    <a href="index.html">예산 피라미드</a>
+    <a href="projects.html">과제 피라미드</a>
+    <a href="treemap.html">예산 트리맵</a>
+    <a href="treemap-proj.html" class="active">과제 트리맵</a>
+  </nav>
+</header>
+
+<main>
+  <section class="page">
+    <h1>과제 트리맵</h1>
+    <p class="subtitle">
+      각 셀의 <strong>면적은 총 예산</strong>에 비례하며,
+      셀 내부에 과제 수만큼 작은 박스가 그리드로 채워져 있습니다.
+      <span class="chip chip-exist">기존 과제</span>(진한 색)는 왼쪽 하단부터,
+      <span class="chip chip-new">신규 과제</span>(연한 색)는 오른쪽 상단부터 배치됩니다.
+      마우스를 올리면 상세 정보를 볼 수 있습니다.
+    </p>
+
+    <div class="treemap-wrap" id="treemap"></div>
+
+    <div class="stats">
+      <div class="stat"><span class="k">총 과제</span><span class="v" id="st-n"></span></div>
+      <div class="stat"><span class="k">기존 과제</span><span class="v" id="st-exist"></span></div>
+      <div class="stat"><span class="k">신규 과제</span><span class="v" id="st-new"></span></div>
+      <div class="stat"><span class="k">세부사업 수</span><span class="v" id="st-sub"></span></div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="treemap.html">← 이전 · 예산 트리맵</a>
+      <span></span>
+    </div>
+  </section>
+</main>
+
+<div class="tm-tip" id="tip"></div>
+
+<footer>
+  <span>2026년 기초연구사업 · 박스 1개 = 과제 1개</span>
+</footer>
+
+<script>
+const DATA = {"total_budget": 27463, "total_N": 15080, "total_exist": 8388, "total_new": 6692, "cells": [{"name": "개인연구 핵심연구 유형Ⅱ", "short": "핵심연구 유형Ⅱ", "total": 8381, "pct": 30.5, "exist_budget": 6581, "new_budget": 1800, "n_proj": 4190, "exist_count": 3290, "new_count": 900, "yearly": "2억", "per_proj": 2.0, "x": 0, "y": 0, "w": 44.0811, "h": 48.4611, "gcols": 62, "grows": 68, "ec": "rgb(37,173,30)", "nc": "rgb(90,212,83)"}, {"name": "개인연구 신진연구 유형Ⅰ", "short": "신진연구 유형Ⅰ", "total": 3725, "pct": 13.6, "exist_budget": 2780, "new_budget": 945, "n_proj": 2483, "exist_count": 1853, "new_count": 630, "yearly": "1.5억", "per_proj": 1.5, "x": 0, "y": 48.4611, "w": 44.0811, "h": 21.5389, "gcols": 71, "grows": 35, "ec": "rgb(84,173,30)", "nc": "rgb(132,212,83)"}, {"name": "집단연구 선도연구센터", "short": "선도연구센터", "total": 2413, "pct": 8.8, "exist_budget": 2193, "new_budget": 220, "n_proj": 48, "exist_count": 36, "new_count": 12, "yearly": "15~50억", "per_proj": 30.0, "x": 44.0811, "y": 0, "w": 30.6247, "h": 20.0833, "gcols": 9, "grows": 6, "ec": "rgb(30,111,173)", "nc": "rgb(83,156,212)"}, {"name": "집단연구 기초연구실", "short": "기초연구실", "total": 1993, "pct": 7.3, "exist_budget": 1333, "new_budget": 660, "n_proj": 398, "exist_count": 266, "new_count": 132, "yearly": "5억", "per_proj": 5.0, "x": 74.7058, "y": 0, "w": 25.2942, "h": 20.0833, "gcols": 22, "grows": 19, "ec": "rgb(30,173,164)", "nc": "rgb(83,212,204)"}, {"name": "개인연구 핵심연구 유형Ⅲ", "short": "핵심연구 유형Ⅲ", "total": 1860, "pct": 6.8, "exist_budget": 660, "new_budget": 1200, "n_proj": 1860, "exist_count": 660, "new_count": 1200, "yearly": "1억", "per_proj": 1.0, "x": 44.0811, "y": 20.0833, "w": 18.5971, "h": 25.4929, "gcols": 37, "grows": 51, "ec": "rgb(173,144,30)", "nc": "rgb(212,185,83)"}, {"name": "개인연구 핵심연구 유형Ⅰ", "short": "핵심연구 유형Ⅰ", "total": 1782, "pct": 6.5, "exist_budget": 1182, "new_budget": 600, "n_proj": 594, "exist_count": 394, "new_count": 200, "yearly": "3억", "per_proj": 3.0, "x": 44.0811, "y": 45.5762, "w": 18.5971, "h": 24.4238, "gcols": 21, "grows": 29, "ec": "rgb(30,173,117)", "nc": "rgb(83,212,162)"}, {"name": "개인연구 세종과학펠로우십 국내", "short": "세종과학펠로우십 국내", "total": 1311, "pct": 4.8, "exist_budget": 1041, "new_budget": 270, "n_proj": 1008, "exist_count": 773, "new_count": 235, "yearly": "1.3억", "per_proj": 1.3, "x": 62.6782, "y": 20.0833, "w": 19.8817, "h": 16.8073, "gcols": 35, "grows": 29, "ec": "rgb(131,173,30)", "nc": "rgb(174,212,83)"}, {"name": "개인연구 핵심연구 도약형", "short": "핵심연구 도약형", "total": 1150, "pct": 4.2, "exist_budget": 750, "new_budget": 400, "n_proj": 575, "exist_count": 375, "new_count": 200, "yearly": "평균 2억", "per_proj": 2.0, "x": 82.5599, "y": 20.0833, "w": 17.4401, "h": 16.8073, "gcols": 24, "grows": 24, "ec": "rgb(30,173,47)", "nc": "rgb(83,212,98)"}, {"name": "개인연구 신진연구 유형Ⅱ", "short": "신진연구 유형Ⅱ", "total": 1000, "pct": 3.6, "exist_budget": 0, "new_budget": 1000, "n_proj": 1000, "exist_count": 0, "new_count": 1000, "yearly": "1억", "per_proj": 1.0, "x": 62.6782, "y": 36.8907, "w": 13.4722, "h": 18.9196, "gcols": 27, "grows": 38, "ec": "rgb(173,167,30)", "nc": "rgb(212,207,83)"}, {"name": "개인연구 핵심연구 기본연구", "short": "핵심연구 기본연구", "total": 750, "pct": 2.7, "exist_budget": 0, "new_budget": 750, "n_proj": 1070, "exist_count": 0, "new_count": 1070, "yearly": "0.7억", "per_proj": 0.7, "x": 62.6782, "y": 55.8103, "w": 13.4722, "h": 14.1897, "gcols": 32, "grows": 34, "ec": "rgb(173,73,30)", "nc": "rgb(212,122,83)"}, {"name": "개인연구 리더연구 유형Ⅱ", "short": "리더연구 유형Ⅱ", "total": 698, "pct": 2.5, "exist_budget": 602, "new_budget": 96, "n_proj": 87, "exist_count": 71, "new_count": 16, "yearly": "8억", "per_proj": 8.0, "x": 76.1504, "y": 36.8907, "w": 12.6593, "h": 14.0538, "gcols": 9, "grows": 10, "ec": "rgb(30,158,173)", "nc": "rgb(83,198,212)"}, {"name": "개인연구 신진연구 전략형", "short": "신진연구 전략형", "total": 617, "pct": 2.2, "exist_budget": 497, "new_budget": 120, "n_proj": 308, "exist_count": 248, "new_count": 60, "yearly": "2억", "per_proj": 2.0, "x": 88.8097, "y": 36.8907, "w": 11.1903, "h": 14.0538, "gcols": 16, "grows": 20, "ec": "rgb(30,173,70)", "nc": "rgb(83,212,119)"}, {"name": "개인연구 핵심연구 기본연구", "short": "핵심연구 기본연구", "total": 400, "pct": 1.5, "exist_budget": 0, "new_budget": 400, "n_proj": 800, "exist_count": 150, "new_count": 650, "yearly": "0.5억", "per_proj": 0.5, "x": 76.1504, "y": 50.9445, "w": 9.3633, "h": 10.8888, "gcols": 26, "grows": 31, "ec": "rgb(173,73,30)", "nc": "rgb(212,122,83)"}, {"name": "집단연구 국가연구소(NRL2.0)", "short": "국가연구소(NRL2.0)", "total": 300, "pct": 1.1, "exist_budget": 200, "new_budget": 100, "n_proj": 6, "exist_count": 2, "new_count": 4, "yearly": "50억", "per_proj": 50.0, "x": 76.1504, "y": 61.8334, "w": 9.3633, "h": 8.1666, "gcols": 3, "grows": 2, "ec": "rgb(30,87,173)", "nc": "rgb(83,135,212)"}, {"name": "개인연구 세종과학펠로우십 복귀·유지", "short": "세종과학펠로우십 복귀·유지", "total": 260, "pct": 0.9, "exist_budget": 0, "new_budget": 260, "n_proj": 200, "exist_count": 0, "new_count": 200, "yearly": "1.3억", "per_proj": 1.3, "x": 85.5137, "y": 50.9445, "w": 7.3852, "h": 8.9735, "gcols": 13, "grows": 16, "ec": "rgb(108,173,30)", "nc": "rgb(153,212,83)"}, {"name": "개인연구 신진연구 인프라 지원", "short": "신진연구 인프라 지원", "total": 250, "pct": 0.9, "exist_budget": 0, "new_budget": 250, "n_proj": 50, "exist_count": 0, "new_count": 50, "yearly": "1~5억", "per_proj": 3.0, "x": 92.8989, "y": 50.9445, "w": 7.1011, "h": 8.9735, "gcols": 6, "grows": 9, "ec": "rgb(30,173,141)", "nc": "rgb(83,212,183)"}, {"name": "개인연구 핵심연구 한우물파기 기초연구", "short": "핵심연구 한우물파기 기초연구", "total": 207, "pct": 0.8, "exist_budget": 147, "new_budget": 60, "n_proj": 103, "exist_count": 73, "new_count": 30, "yearly": "2억", "per_proj": 2.0, "x": 85.5137, "y": 59.918, "w": 5.2333, "h": 10.082, "gcols": 7, "grows": 15, "ec": "rgb(30,173,94)", "nc": "rgb(83,212,140)"}, {"name": "개인연구 신진연구 도전형", "short": "신진연구 도전형", "total": 184, "pct": 0.7, "exist_budget": 134, "new_budget": 50, "n_proj": 184, "exist_count": 134, "new_count": 50, "yearly": "1억", "per_proj": 1.0, "x": 90.7469, "y": 59.918, "w": 9.2531, "h": 5.0685, "gcols": 18, "grows": 11, "ec": "rgb(155,173,30)", "nc": "rgb(196,212,83)"}, {"name": "개인연구 핵심연구 글로벌형", "short": "핵심연구 글로벌형", "total": 125, "pct": 0.5, "exist_budget": 89, "new_budget": 36, "n_proj": 83, "exist_count": 63, "new_count": 20, "yearly": "1.5억", "per_proj": 1.5, "x": 90.7469, "y": 64.9866, "w": 6.3551, "h": 5.0134, "gcols": 10, "grows": 9, "ec": "rgb(61,173,30)", "nc": "rgb(111,212,83)"}, {"name": "개인연구 리더연구 유형Ⅰ", "short": "리더연구 유형Ⅰ", "total": 36, "pct": 0.1, "exist_budget": 0, "new_budget": 36, "n_proj": 3, "exist_count": 0, "new_count": 3, "yearly": "16억", "per_proj": 16.0, "x": 97.1021, "y": 64.9866, "w": 2.8979, "h": 3.1664, "gcols": 2, "grows": 2, "ec": "rgb(30,134,173)", "nc": "rgb(83,177,212)"}, {"name": "개인연구 세종과학펠로우십 국외", "short": "세종과학펠로우십 국외", "total": 21, "pct": 0.1, "exist_budget": 0, "new_budget": 21, "n_proj": 30, "exist_count": 0, "new_count": 30, "yearly": "0.7억", "per_proj": 0.7, "x": 97.1021, "y": 68.1529, "w": 2.8979, "h": 1.8471, "gcols": 7, "grows": 5, "ec": "rgb(173,120,30)", "nc": "rgb(212,164,83)"}]};
+
+function fmt(n) { return n.toLocaleString('ko-KR'); }
+
+const wrap = document.getElementById('treemap');
+const tip  = document.getElementById('tip');
+
+document.getElementById('st-n').textContent     = fmt(DATA.total_N) + ' 개';
+document.getElementById('st-exist').textContent = fmt(DATA.total_exist) + ' 개';
+document.getElementById('st-new').textContent   = fmt(DATA.total_new) + ' 개';
+document.getElementById('st-sub').textContent   = DATA.cells.length + ' 개';
+
+DATA.cells.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'tm-cell';
+  el.style.left   = c.x + '%';
+  el.style.bottom = c.y + '%';
+  el.style.width  = c.w + '%';
+  el.style.height = c.h + '%';
+
+  // Grid of boxes
+  const grid = document.createElement('div');
+  grid.className = 'tm-grid';
+  grid.style.gridTemplateColumns = `repeat(${c.gcols}, 1fr)`;
+  grid.style.gridTemplateRows    = `repeat(${c.grows}, 1fr)`;
+
+  const N = c.n_proj;
+  const nExist = c.exist_count;
+
+  // Column-major bottom-to-top ordering for left=기존, right=신규
+  // Map each grid slot (row, col) to a rank
+  const lastRowN = N - (c.grows - 1) * c.gcols;
+  const slots = []; // array of {row, col} in column-major bottom-to-top order
+  for (let col = 0; col < c.gcols; col++) {
+    const maxRow = col < lastRowN ? c.grows - 1 : c.grows - 2;
+    for (let row = maxRow; row >= 0; row--) {
+      slots.push({ row, col });
+    }
+  }
+
+  // Create a color map: slot index in column-major order → exist or new
+  const colorMap = new Map();
+  slots.forEach((s, rank) => {
+    const key = s.row * c.gcols + s.col;
+    colorMap.set(key, rank < nExist ? 'exist' : 'new');
+  });
+
+  // Render grid row-major (CSS grid order)
+  let boxIdx = 0;
+  for (let row = 0; row < c.grows; row++) {
+    for (let col = 0; col < c.gcols; col++) {
+      const box = document.createElement('div');
+      box.className = 'tm-box';
+      // Check if this slot has a project
+      const slotKey = row * c.gcols + col;
+      if (colorMap.has(slotKey)) {
+        const isExist = colorMap.get(slotKey) === 'exist';
+        box.style.background = isExist ? c.ec : c.nc;
+      } else {
+        box.style.background = 'transparent';
+        box.style.border = 'none';
+      }
+      grid.appendChild(box);
+    }
+  }
+  el.appendChild(grid);
+
+  // Label overlay
+  const fsName = Math.min(16, Math.max(7, Math.sqrt(c.w * c.h) * 0.85));
+  const fsSub  = Math.min(13, Math.max(6, Math.sqrt(c.w * c.h) * 0.6));
+  let labelHTML = `<div class="tm-label">`;
+  labelHTML += `<div class="name" style="font-size:${fsName}px">${c.short}</div>`;
+  if (c.w > 6 && c.h > 7) {
+    labelHTML += `<div class="sub" style="font-size:${fsSub}px">${fmt(c.n_proj)}개</div>`;
+  }
+  labelHTML += `</div>`;
+  el.insertAdjacentHTML('beforeend', labelHTML);
+
+  // Tooltip
+  el.addEventListener('mouseenter', e => {
+    const ef = c.n_proj > 0 ? c.exist_count / c.n_proj : 0;
+    tip.style.display = 'block';
+    tip.innerHTML = `
+      <div class="tip-name">${c.name}</div>
+      <div class="tip-row"><span class="tip-k">과제당 연구비</span><span class="tip-v">${c.yearly}</span></div>
+      <div class="tip-row"><span class="tip-k">총 예산</span><span class="tip-v">${fmt(c.total)}억 (${c.pct}%)</span></div>
+      <div class="tip-row"><span class="tip-k">총 과제 수</span><span class="tip-v">${fmt(c.n_proj)}개</span></div>
+      <div class="tip-row"><span class="tip-k">기존 과제</span><span class="tip-v">${fmt(c.exist_count)}개</span></div>
+      <div class="tip-row"><span class="tip-k">신규 과제</span><span class="tip-v">${fmt(c.new_count)}개</span></div>
+      <div class="tip-bar">
+        <div class="tip-bar-exist" style="width:${(ef*100).toFixed(1)}%;background:${c.ec}"></div>
+        <div class="tip-bar-new"   style="width:${((1-ef)*100).toFixed(1)}%;background:${c.nc}"></div>
+      </div>
+    `;
+  });
+  el.addEventListener('mousemove', e => {
+    let tx = e.clientX + 14, ty = e.clientY + 14;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    if (tx + tw > window.innerWidth - 8)  tx = e.clientX - tw - 10;
+    if (ty + th > window.innerHeight - 8) ty = e.clientY - th - 10;
+    tip.style.left = tx + 'px';
+    tip.style.top  = ty + 'px';
+  });
+  el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+
+  wrap.appendChild(el);
+});
+</script>
+</body>
+</html>

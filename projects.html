@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026년 기초연구사업 과제 피라미드</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">2026 기초연구사업 인포그래픽</div>
+  <nav>
+    <a href="index.html">예산 피라미드</a>
+    <a href="projects.html" class="active">과제 피라미드</a>
+    <a href="treemap.html">예산 트리맵</a>
+    <a href="treemap-proj.html">과제 트리맵</a>
+  </nav>
+</header>
+
+<main>
+  <section class="page">
+    <h1>과제 피라미드</h1>
+    <p class="subtitle">
+      박스 1개는 과제 1개, <strong>박스의 면적은 과제당 연구비</strong>와 같습니다.
+      같은 과제당 연구비를 갖는 사업들은 같은 층(밴드)에 모여 있으며,
+      각 과제는 <span class="chip chip-exist">기존 과제</span>와
+      <span class="chip chip-new">신규 과제</span>로 색이 구분됩니다.
+    </p>
+
+    <figure>
+      <img src="2026_기초연구사업_과제피라미드_split.png"
+           alt="2026년 기초연구사업 과제 피라미드 (기존/신규 분할)">
+    </figure>
+
+    <div class="stats">
+      <div class="stat"><span class="k">총 과제</span><span class="v">15,080 개</span></div>
+      <div class="stat"><span class="k">기존 과제</span><span class="v">8,388 개</span></div>
+      <div class="stat"><span class="k">신규 과제</span><span class="v">6,692 개</span></div>
+      <div class="stat"><span class="k">세부사업 수</span><span class="v">21 개</span></div>
+    </div>
+
+    <div class="pager">
+      <a class="prev" href="index.html">← 이전 · 예산 피라미드</a>
+      <a class="next" href="treemap.html">다음 · 예산 트리맵 →</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>2026년 기초연구사업 예산 · 박스 면적 = 과제당 연구비(억)</span>
+</footer>
+</body>
+</html>
